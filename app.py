@@ -124,11 +124,26 @@ def omluvenky_stranka():
         db.session.add(nova_omluvenka)
         db.session.commit()
         return redirect(url_for('omluvenky_stranka'))
+    
+    
         
     vsechni_clenove = Clen.query.all()
     vsechny_omluvenky = Omluvenka.query.order_by(Omluvenka.datum_od.desc()).all()
     return render_template('omluvenky.html', clenove=vsechni_clenove, omluvenky=vsechny_omluvenky)
 
+
+@app.route('/smazat_omluvenku/<int:omluvenka_id>', methods=['POST'])
+def smazat_omluvenku(omluvenka_id):
+    # Najde omluvenku podle ID
+    omluvenka = Omluvenka.query.get_or_404(omluvenka_id)
+    
+    # Smaže ji z databáze
+    db.session.delete(omluvenka)
+    db.session.commit()
+    
+    # Chytré přesměrování: vrátí tě zpět na stránku, ze které jsi tlačítko kliknul 
+    # (ať už jsi byl v celkovém seznamu omluvenek, nebo na profilu konkrétního člena)
+    return redirect(request.referrer or url_for('omluvenky_stranka'))
 # ==========================================
 # DASHBOARD (Přesunut na tlačítko v menu)
 # ==========================================
