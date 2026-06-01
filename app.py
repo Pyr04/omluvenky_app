@@ -170,24 +170,35 @@ def detail_akce(akce_id):
     akce = Akce.query.get_or_404(akce_id)
     vsechni_clenove = Clen.query.all()
     
-    # 1. AUTOMATIZACE omluvenek
+    # 1. AUTOMATIZACE omluvenek - VYLEPŠENÁ CHYTRÁ VERZE
     for clen in vsechni_clenove:
         ucast = Ucast.query.filter_by(akce_id=akce.id, clen_id=clen.id).first()
         
+        # Vždy zkontrolujeme, zda má člen omluvenku platnou pro datum této akce
+        ma_omluvenku = Omluvenka.query.filter(
+            Omluvenka.clen_id == clen.id,
+            Omluvenka.datum_od <= akce.datum,
+            Omluvenka.datum_do >= akce.datum
+        ).first()
+        
         if not ucast:
-            ma_omluvenku = Omluvenka.query.filter(
-                Omluvenka.clen_id == clen.id,
-                Omluvenka.datum_od <= akce.datum,
-                Omluvenka.datum_do >= akce.datum
-            ).first()
-            
+            # Záznam ještě neexistuje (první načtení)
             novy_stav = 'Omluven' if ma_omluvenku else 'Nezadáno'
             ucast = Ucast(akce_id=akce.id, clen_id=clen.id, stav=novy_stav)
             db.session.add(ucast)
+        else:
+            # Záznam už existuje. Měníme ho jen, pokud akce ještě nebyla uzavřena velitelem
+            if not akce.probehla:
+                # Pokud dostal omluvenku dodatečně
+                if ma_omluvenku and ucast.stav == 'Nezadáno':
+                    ucast.stav = 'Omluven'
+                # Pokud mu byla dodatečně smazána (zrušil ji)
+                elif not ma_omluvenku and ucast.stav == 'Omluven':
+                    ucast.stav = 'Nezadáno'
             
     db.session.commit()
     
- # 2. ULOŽENÍ DOCHÁZKY Z FORMULÁŘE
+    # 2. ULOŽENÍ DOCHÁZKY Z FORMULÁŘE
     if request.method == 'POST':
         for clen in vsechni_clenove:
             odeslany_stav = request.form.get(f'stav_{clen.id}')
@@ -195,12 +206,13 @@ def detail_akce(akce_id):
                 ucast = Ucast.query.filter_by(akce_id=akce.id, clen_id=clen.id).first()
                 ucast.stav = odeslany_stav
                 
-        # NOVÝ ŘÁDEK: Jakmile velitel uloží docházku, akce se označí jako proběhlá
-        akce.probehla = True 
+        # Potvrzením docházky se mise zamkne
+        akce.probehla = True
         
         db.session.commit()
         return redirect(url_for('detail_akce', akce_id=akce.id))
-    # 3. NAČTENÍ DAT
+        
+    # 3. NAČTENÍ DAT PRO ZOBRAZENÍ
     ucasti = Ucast.query.filter_by(akce_id=akce.id).all()
     ucast_dict = {u.clen_id: u.stav for u in ucasti}
     
