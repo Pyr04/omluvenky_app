@@ -60,7 +60,12 @@
             </div>
 
             <h2>Aktivní absence letky</h2>
-            <table>
+            <div style="margin-bottom: 20px; position: relative;">
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 15px; top: 12px; color: #888;"></i>
+                <input type="text" id="search-omluvenky" onkeyup="hledatOmluvenku()" placeholder="Hledat člena podle jména..." style="width: 100%; padding: 10px 10px 10px 40px; background-color: #1a1a1a; border: 1px solid #333; color: #fff; font-family: 'Roboto', sans-serif; box-sizing: border-box; border-radius: 4px;">
+            </div>
+            
+            <table id="tabulka-omluvenek">
                 <tr>
                     <th>Jméno</th>
                     <th>Absence OD</th>
@@ -81,6 +86,29 @@
 
         </div>
     </div>
+
+    <script>
+        function hledatOmluvenku() {
+            var input = document.getElementById("search-omluvenky");
+            var filter = input.value.toLowerCase();
+            var table = document.getElementById("tabulka-omluvenek");
+            var tr = table.getElementsByTagName("tr");
+
+            for (var i = 1; i < tr.length; i++) {
+                // ZDE POZOR: [0] znamená hledání v 1. sloupci. Pokud je jméno ve 2. sloupci, dej sem [1].
+                var td = tr[i].getElementsByTagName("td")[0]; 
+                
+                if (td) {
+                    var txtValue = td.textContent || td.innerText;
+                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    </script>
 
 </body>
 </html>

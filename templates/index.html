@@ -70,7 +70,11 @@
         </div>
 
         <h2>Aktivní personál</h2>
-        <table>
+        <div style="margin-bottom: 20px; position: relative;">
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 15px; top: 12px; color: #888;"></i>
+                <input type="text" id="search-input" onkeyup="hledatClena()" placeholder="Hledat jméno nebo Callsign..." style="width: 100%; padding: 10px 10px 10px 40px; background-color: #1a1a1a; border: 1px solid #333; color: #fff; font-family: 'Roboto', sans-serif; box-sizing: border-box; border-radius: 4px;">
+            </div>
+        <table id="tabulka-clenu">
           <tr>
             <th>ID</th>
             <th>Jméno</th>
@@ -101,5 +105,31 @@
         </table>
       </div>
     </div>
+
+    <script>
+        function hledatClena() {
+            // Získání hodnoty z vyhledávacího pole a převod na malá písmena
+            var input = document.getElementById("search-input");
+            var filter = input.value.toLowerCase();
+            var table = document.getElementById("tabulka-clenu");
+            var tr = table.getElementsByTagName("tr");
+
+            // Procházení všech řádků tabulky (začínáme od 1, abychom přeskočili hlavičku s názvy sloupců)
+            for (var i = 1; i < tr.length; i++) {
+                // Bereme sloupec s indexem 1 (kde je jméno/callsign). Pokud chceš hledat podle ID, byl by to index 0
+                var td = tr[i].getElementsByTagName("td")[1]; 
+                
+                if (td) {
+                    var txtValue = td.textContent || td.innerText;
+                    // Pokud text ve sloupci obsahuje to, co jsme napsali (shoda)
+                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                        tr[i].style.display = ""; // Zobrazí řádek
+                    } else {
+                        tr[i].style.display = "none"; // Skryje řádek
+                    }
+                }
+            }
+        }
+    </script>
   </body>
 </html>
