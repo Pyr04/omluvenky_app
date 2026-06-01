@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Velitelství - SPEAR System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <div class="sidebar">
+      <div class="sidebar-brand">
+        <i class="fa-solid fa-crosshairs"> SPARTANS</i>
+      </div>
+
+      <div class="sidebar-category">Uživatel</div>
+      <div class="sidebar-nav">
+        <a href="/"><i class="fa-solid fa-desktop"></i> Seznam členů</a>
+        <a href="/omluvenky"><i class="fa-regular fa-calendar-check"></i> Omluvenky</a>
+      </div>
+
+      <div class="sidebar-category">Akce</div>
+      <div class="sidebar-nav">
+        <a href="/akce"><i class="fa-solid fa-map-location-dot"></i> Akce </a>
+        <a href="/strike"><i class="fa-solid fa-triangle-exclamation"></i> STRIKE evidence</a>
+      </div>
+
+      <div class="sidebar-category">Velení</div>
+        <div class="sidebar-nav">
+            <a href="/dashboard" class="active"><i class="fa-solid fa-chart-line"></i> Přehled (HQ)</a>
+        </div>
+        
+      <div style="margin-top: auto; padding-top: 20px;">
+          {% if session.get('prihlasen') %}
+              <a href="/logout" style="color: #d32f2f; border-top: 1px solid #2a2a2a; margin-top: 20px;">
+                  <i class="fa-solid fa-power-off"></i> Odhlásit velitele
+              </a>
+          {% else %}
+              <a href="/login" style="color: #4caf50; border-top: 1px solid #2a2a2a; margin-top: 20px;">
+                  <i class="fa-solid fa-shield-halved"></i> Přihlášení velitele
+              </a>
+          {% endif %}
+      </div>
+    </div>
+
+    <div class="main-content">
+        <div class="container" style="display: block;">
+            
+            <h1 style="margin-bottom: 5px;">Hlavní velitelství</h1>
+            <p style="color: #aaa; margin-top: 0;">Souhrnné statistiky a operační připravenost.</p>
+
+            <div class="dashboard-grid">
+                
+                <div class="stat-card card-blue">
+                    <i class="fa-solid fa-users stat-icon"></i>
+                    <div class="stat-info">
+                        <span class="stat-value">{{ clenu }}</span>
+                        <span class="stat-label">Aktivní operátoři</span>
+                    </div>
+                </div>
+
+                <div class="stat-card card-green">
+                    <i class="fa-solid fa-helicopter stat-icon"></i>
+                    <div class="stat-info">
+                        <span class="stat-value">{{ akci }}</span>
+                        <span class="stat-label">Odehrané operace</span>
+                    </div>
+                </div>
+
+                <div class="stat-card card-orange">
+                    <i class="fa-solid fa-user-clock stat-icon"></i>
+                    <div class="stat-info">
+                        <span class="stat-value">{{ omluvenek }}</span>
+                        <span class="stat-label">Dnes mimo službu</span>
+                    </div>
+                </div>
+
+                <div class="stat-card card-red">
+                    <i class="fa-solid fa-skull-crossbones stat-icon"></i>
+                    <div class="stat-info">
+                        <span class="stat-value">{{ striku }}</span>
+                        <span class="stat-label">Prohřešky kázně</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="charts-grid">
+                
+                <div class="chart-container full-width">
+                    <h2>Účast na posledních operacích</h2>
+                    <div class="canvas-wrapper">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h2>Struktura hodností</h2>
+                    <div class="canvas-wrapper">
+                        <canvas id="rankChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h2>Černá listina (Nejvíce STRIKE)</h2>
+                    <div class="canvas-wrapper">
+                        <canvas id="strikeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div> </div> <script>
+        // Nastavení tmavého režimu pro texty v grafech
+        Chart.defaults.color = '#888';
+        Chart.defaults.font.family = "'Roboto', sans-serif";
+
+        // --- GRAF 1: Docházka (Line Chart) ---
+        const attCtx = document.getElementById('attendanceChart').getContext('2d');
+        new Chart(attCtx, {
+            type: 'line',
+            data: {
+                labels: {{ akce_labels | tojson }},
+                datasets: [{
+                    label: 'Počet nasazených operátorů',
+                    data: {{ akce_ucast_counts | tojson }},
+                    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                    borderColor: '#4caf50',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#1a1a1a',
+                    pointBorderColor: '#4caf50',
+                    pointRadius: 4,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+
+        // --- GRAF 2: Rozložení hodností (Pie Chart) ---
+        const rankCtx = document.getElementById('rankChart').getContext('2d');
+        new Chart(rankCtx, {
+            type: 'pie',
+            data: {
+                labels: {{ hodnosti_labels | tojson }},
+                datasets: [{
+                    data: {{ hodnosti_counts | tojson }},
+                    backgroundColor: ['#03a9f4', '#4caf50', '#ff9800', '#9c27b0', '#f44336', '#009688'],
+                    borderColor: '#1a1a1a',
+                    borderWidth: 2
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // --- GRAF 3: Černá listina (Bar Chart) ---
+        const strikeCtx = document.getElementById('strikeChart').getContext('2d');
+        new Chart(strikeCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ hrisnici_labels | tojson }},
+                datasets: [{
+                    label: 'Počet STRIKE (AWOL / Pozdě)',
+                    data: {{ hrisnici_counts | tojson }},
+                    backgroundColor: '#f44336',
+                    borderColor: '#b71c1c',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>

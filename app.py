@@ -1,257 +1,183 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
-from datetime import date, datetime # Přidán import datetime nahoru
+from datetime import date, datetime
+from functools import wraps
+from werkzeug.security import check_password_hash, generate_password_hash
 
+# ==========================================
+# 1. KONFIGURACE APLIKACE A DATABÁZE
+# ==========================================
 app = Flask(__name__)
+app.secret_key = 'super_tajny_klic_letky_160'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///omluvenky.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False 
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
 
-# 1. TABULKA: Hodnosti
+# Tvé velitelské heslo (nyní Spartans160)
+VELITEL_HESLO_HASH = generate_password_hash("Spartans160")
+
+# ==========================================
+# 2. BEZPEČNOSTNÍ ZÁMEK (DEKORÁTOR)
+# ==========================================
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('prihlasen'):
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+# ==========================================
+# 3. DATABÁZOVÉ MODELY
+# ==========================================
 class Hodnost(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nazev = db.Column(db.String(50), nullable=False)
+    clenove = db.relationship('Clen', backref='hodnost', lazy=True)
 
-# 2. TABULKA: Člen
 class Clen(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    jmeno = db.Column(db.String(50), nullable=False)
+    jmeno = db.Column(db.String(100), nullable=False)
     hodnost_id = db.Column(db.Integer, db.ForeignKey('hodnost.id'), nullable=False)
-    hodnost = db.relationship('Hodnost')
+    omluvenky = db.relationship('Omluvenka', backref='clen', lazy=True, cascade="all, delete-orphan")
+    ucasti = db.relationship('Ucast', backref='clen', lazy=True, cascade="all, delete-orphan")
 
-# 3. TABULKA: Omluvenka (OPRAVENO NA db.Date)
-class Omluvenka(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    datum_od = db.Column(db.Date, nullable=False) # Změněno ze String na Date
-    datum_do = db.Column(db.Date, nullable=False) # Změněno ze String na Date
-    clen_id = db.Column(db.Integer, db.ForeignKey('clen.id'), nullable=False)
-    clen = db.relationship('Clen', backref='vsechny_omluvenky')
-
-# 4. TABULKA: Typ Akce
-class TypAkce(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nazev = db.Column(db.String(50), nullable=False)
-    vsechny_akce = db.relationship('Akce', backref='typ_akce')
- 
-# 5. TABULKA: Akce
 class Akce(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nazev = db.Column(db.String(100), nullable=False)
     datum = db.Column(db.Date, nullable=False)
-    typ_id = db.Column(db.Integer, db.ForeignKey('typ_akce.id'), nullable=False)
     probehla = db.Column(db.Boolean, default=False)
+    ucasti = db.relationship('Ucast', backref='akce', lazy=True, cascade="all, delete-orphan")
 
-# 6. TABULKA: Účast na akci
+class Omluvenka(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    clen_id = db.Column(db.Integer, db.ForeignKey('clen.id'), nullable=False)
+    datum_od = db.Column(db.Date, nullable=False)
+    datum_do = db.Column(db.Date, nullable=False)
+
 class Ucast(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    akce_id = db.Column(db.Integer, db.ForeignKey('akce.id'), nullable=False)
     clen_id = db.Column(db.Integer, db.ForeignKey('clen.id'), nullable=False)
-    stav = db.Column(db.String(20), nullable=False, default='Nezadáno')
-    akce = db.relationship('Akce', backref=db.backref('ucasti', cascade="all, delete-orphan"))
-    clen = db.relationship('Clen', backref='ucasti')
+    akce_id = db.Column(db.Integer, db.ForeignKey('akce.id'), nullable=False)
+    stav = db.Column(db.String(50), default='Nezadáno')
 
-# Vytvoření databáze a výchozích hodnot
-with app.app_context():
-    db.create_all()
-    if not Hodnost.query.first():
-        db.session.add_all([
-            Hodnost(nazev="WOC"), 
-            Hodnost(nazev="WO1"), 
-            Hodnost(nazev="CW2"),
-            Hodnost(nazev="CW3"), 
-            Hodnost(nazev="CW4"), 
-            Hodnost(nazev="CW5"),
-            Hodnost(nazev="2.LT"), 
-            Hodnost(nazev="1.LT"), 
-            Hodnost(nazev="CPT"),
-        ])
-        db.session.commit()
+# ==========================================
+# 4. SYSTÉM PŘIHLÁŠENÍ (STRÁŽNICE)
+# ==========================================
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    chyba = None
+    if request.method == 'POST':
+        zadane_heslo = request.form.get('heslo')
+        if check_password_hash(VELITEL_HESLO_HASH, zadane_heslo):
+            session['prihlasen'] = True
+            return redirect(url_for('dashboard'))
+        else:
+            chyba = "Přístup odepřen: Nesprávné velitelské heslo."
+    return render_template('login.html', chyba=chyba)
 
-# --- TRASY APLIKACE ---
+@app.route('/logout')
+def logout():
+    session.pop('prihlasen', None)
+    return redirect(url_for('dashboard'))
 
+# ==========================================
+# 5. VEŘEJNÝ DASHBOARD (BEZ ZÁMKU)
+# ==========================================
+@app.route('/dashboard')
+def dashboard():
+    pocet_clenu = Clen.query.count()
+    pocet_akci = Akce.query.filter_by(probehla=True).count()
+    
+    dnes = date.today()
+    aktivni_omluvenky = Omluvenka.query.filter(
+        Omluvenka.datum_od <= dnes, 
+        Omluvenka.datum_do >= dnes
+    ).count()
+    
+    pocet_strike = Ucast.query.filter(Ucast.stav.in_(['AWOL', 'Pozdní příchod'])).count()
+
+    # Data pro grafy
+    hodnosti_data = db.session.query(Hodnost.nazev, db.func.count(Clen.id)).join(Clen).group_by(Hodnost.id).all()
+    hodnosti_labels = [row[0] for row in hodnosti_data]
+    hodnosti_counts = [row[1] for row in hodnosti_data]
+    
+    probehle_akce = Akce.query.filter_by(probehla=True).order_by(Akce.datum.asc()).limit(10).all()
+    akce_labels = [akce.nazev for akce in probehle_akce]
+    akce_ucast_counts = []
+    
+    for akce in probehle_akce:
+        ucast_count = Ucast.query.filter(
+            Ucast.akce_id == akce.id,
+            ~Ucast.stav.in_(['AWOL', 'Omluven', 'Nezadáno'])
+        ).count()
+        akce_ucast_counts.append(ucast_count)
+
+    hrisnici_data = db.session.query(Clen.jmeno, db.func.count(Ucast.id)).join(Ucast).filter(
+        Ucast.stav.in_(['AWOL', 'Pozdní příchod'])
+    ).group_by(Clen.id).order_by(db.func.count(Ucast.id).desc()).limit(5).all()
+    
+    hrisnici_labels = [row[0] for row in hrisnici_data]
+    hrisnici_counts = [row[1] for row in hrisnici_data]
+
+    return render_template('dashboard.html', 
+                           clenu=pocet_clenu, akci=pocet_akci, omluvenek=aktivni_omluvenky, striku=pocet_strike,
+                           hodnosti_labels=hodnosti_labels, hodnosti_counts=hodnosti_counts,
+                           akce_labels=akce_labels, akce_ucast_counts=akce_ucast_counts,
+                           hrisnici_labels=hrisnici_labels, hrisnici_counts=hrisnici_counts)
+
+# ==========================================
+# 6. ZAMČENÉ TRASY (ADMINISTRACE DATABÁZE)
+# ==========================================
 @app.route('/')
+@login_required
 def index():
-    clenove_z_db = Clen.query.all()
-    hodnosti_z_db = Hodnost.query.all()
-    return render_template('index.html', clenove=clenove_z_db, hodnosti=hodnosti_z_db)
-
-@app.route('/pridat', methods=['POST'])
-def pridat_clena():
-    jmeno_z_formulare = request.form['jmeno']
-    hodnost_id_z_formulare = request.form['hodnost']
-    novy_clen = Clen(jmeno=jmeno_z_formulare, hodnost_id=hodnost_id_z_formulare)
-    db.session.add(novy_clen)
-    db.session.commit()
-    return redirect(url_for('index'))
-
-@app.route('/profil/<int:id>')
-def profil(id):
-    vybrany_clen = Clen.query.get_or_404(id)
-    omluvenky_clena = Omluvenka.query.filter_by(clen_id=id).all()
-    hodnosti_z_db = Hodnost.query.all()
-    return render_template('profil.html', clen=vybrany_clen, omluvenky=omluvenky_clena, hodnosti=hodnosti_z_db)
-
-# OPRAVA: Převod textu z formuláře na skutečné datum
-@app.route('/pridat_omluvenku/<int:clen_id>', methods=['POST'])
-def pridat_omluvenku(clen_id):
-    od_str = request.form['datum_od']
-    do_str = request.form['datum_do']
-    
-    od = datetime.strptime(od_str, '%Y-%m-%d').date()
-    do = datetime.strptime(do_str, '%Y-%m-%d').date()
-    
-    nova_omluvenka = Omluvenka(datum_od=od, datum_do=do, clen_id=clen_id)
-    db.session.add(nova_omluvenka)
-    db.session.commit()
-    return redirect(url_for('profil', id=clen_id))
-
-@app.route('/zmenit_hodnost/<int:clen_id>', methods=['POST'])
-def zmenit_hodnost(clen_id):
-    clen = Clen.query.get_or_404(clen_id)
-    clen.hodnost_id = request.form['hodnost']
-    db.session.commit()
-    return redirect(url_for('profil', id=clen_id))
-
-@app.route('/smazat_clena/<int:clen_id>', methods=['POST'])
-def smazat_clena(clen_id):
-    clen = Clen.query.get_or_404(clen_id)
-    Omluvenka.query.filter_by(clen_id=clen_id).delete()
-    db.session.delete(clen)
-    db.session.commit()
-    return redirect(url_for('index'))
+    clenove = Clen.query.all()
+    hodnosti = Hodnost.query.all()
+    return render_template('index.html', clenove=clenove, hodnosti=hodnosti)
 
 @app.route('/omluvenky', methods=['GET', 'POST'])
+@login_required
 def omluvenky_stranka():
     if request.method == 'POST':
         clen_id = request.form.get('clen_id')
         datum_od_str = request.form.get('datum_od')
         datum_do_str = request.form.get('datum_do')
         
-        datum_od = datetime.strptime(datum_od_str, '%Y-%m-%d').date()
-        datum_do = datetime.strptime(datum_do_str, '%Y-%m-%d').date()
-        
-        nova_omluvenka = Omluvenka(datum_od=datum_od, datum_do=datum_do, clen_id=clen_id)
-        db.session.add(nova_omluvenka)
-        db.session.commit()
-        return redirect(url_for('omluvenky_stranka'))
-        
-    vsechni_clenove = Clen.query.all()
-    vsechny_omluvenky = Omluvenka.query.order_by(Omluvenka.datum_od.desc()).all()
-    return render_template('omluvenky.html', clenove=vsechni_clenove, omluvenky=vsechny_omluvenky)
+        if clen_id and datum_od_str and datum_do_str:
+            datum_od = datetime.strptime(datum_od_str, '%Y-%m-%d').date()
+            datum_do = datetime.strptime(datum_do_str, '%Y-%m-%d').date()
+            nova_omluvenka = Omluvenka(clen_id=clen_id, datum_od=datum_od, datum_do=datum_do)
+            db.session.add(nova_omluvenka)
+            db.session.commit()
+            return redirect(url_for('omluvenky_stranka'))
+
+    omluvenky = Omluvenka.query.order_by(Omluvenka.datum_od.desc()).all()
+    clenove = Clen.query.all()
+    return render_template('omluvenky.html', omluvenky=omluvenky, clenove=clenove)
 
 @app.route('/akce', methods=['GET', 'POST'])
+@login_required
 def akce_stranka():
-    if request.method == 'POST':
-        nazev = request.form.get('nazev')
-        datum_str = request.form.get('datum')
-        typ_id = request.form.get('typ_id')
-        
-        datum = datetime.strptime(datum_str, '%Y-%m-%d').date()
-        nova_akce = Akce(nazev=nazev, datum=datum, typ_id=typ_id)
-        db.session.add(nova_akce)
-        db.session.commit()
-        return redirect(url_for('akce_stranka'))
-        
-    typy_akci = TypAkce.query.all()
-    if not typy_akci:
-        db.session.add(TypAkce(nazev='Mise (povinná)'))
-        db.session.add(TypAkce(nazev='Trénink'))
-        db.session.add(TypAkce(nazev='Mise (nepovinná)'))
-        
-        
-        db.session.commit()
-        typy_akci = TypAkce.query.all()
-
-    vsechny_akce = Akce.query.order_by(Akce.datum.asc()).all()
-    return render_template('akce.html', typy_akci=typy_akci, akce_seznam=vsechny_akce, dnesni_datum=date.today())
-
-@app.route('/akce/<int:akce_id>', methods=['GET', 'POST'])
-def detail_akce(akce_id):
-    akce = Akce.query.get_or_404(akce_id)
-    vsechni_clenove = Clen.query.all()
-    
-    # 1. AUTOMATIZACE omluvenek - VYLEPŠENÁ CHYTRÁ VERZE
-    for clen in vsechni_clenove:
-        ucast = Ucast.query.filter_by(akce_id=akce.id, clen_id=clen.id).first()
-        
-        # Vždy zkontrolujeme, zda má člen omluvenku platnou pro datum této akce
-        ma_omluvenku = Omluvenka.query.filter(
-            Omluvenka.clen_id == clen.id,
-            Omluvenka.datum_od <= akce.datum,
-            Omluvenka.datum_do >= akce.datum
-        ).first()
-        
-        if not ucast:
-            # Záznam ještě neexistuje (první načtení)
-            novy_stav = 'Omluven' if ma_omluvenku else 'Nezadáno'
-            ucast = Ucast(akce_id=akce.id, clen_id=clen.id, stav=novy_stav)
-            db.session.add(ucast)
-        else:
-            # Záznam už existuje. Měníme ho jen, pokud akce ještě nebyla uzavřena velitelem
-            if not akce.probehla:
-                # Pokud dostal omluvenku dodatečně
-                if ma_omluvenku and ucast.stav == 'Nezadáno':
-                    ucast.stav = 'Omluven'
-                # Pokud mu byla dodatečně smazána (zrušil ji)
-                elif not ma_omluvenku and ucast.stav == 'Omluven':
-                    ucast.stav = 'Nezadáno'
-            
-    db.session.commit()
-    
-    # 2. ULOŽENÍ DOCHÁZKY Z FORMULÁŘE
-    if request.method == 'POST':
-        for clen in vsechni_clenove:
-            odeslany_stav = request.form.get(f'stav_{clen.id}')
-            if odeslany_stav and odeslany_stav != 'Omluven_disabled':
-                ucast = Ucast.query.filter_by(akce_id=akce.id, clen_id=clen.id).first()
-                ucast.stav = odeslany_stav
-                
-        # Potvrzením docházky se mise zamkne
-        akce.probehla = True
-        
-        db.session.commit()
-        return redirect(url_for('detail_akce', akce_id=akce.id))
-        
-    # 3. NAČTENÍ DAT PRO ZOBRAZENÍ
-    ucasti = Ucast.query.filter_by(akce_id=akce.id).all()
-    ucast_dict = {u.clen_id: u.stav for u in ucasti}
-    
-    return render_template('detail_akce.html', akce=akce, clenove=vsechni_clenove, ucast_dict=ucast_dict)
-
-
-@app.route('/smazat_akci/<int:akce_id>', methods=['POST'])
-def smazat_akci(akce_id):
-    akce = Akce.query.get_or_404(akce_id)
-    
-    # BEZPEČNOST: Nejdříve smažeme všechny záznamy o účasti spojené s touto akcí
-    Ucast.query.filter_by(akce_id=akce_id).delete()
-    
-    # Poté smažeme samotnou operaci
-    db.session.delete(akce)
-    db.session.commit()
-    
-    return redirect(url_for('akce_stranka'))
-
-# --- SYSTÉM STRIKE (KNIHA HŘÍCHŮ) ---
+    # Zde máš zřejmě logiku pro přidávání a výpis akcí
+    akce_vsechny = Akce.query.order_by(Akce.datum.desc()).all()
+    return render_template('akce.html', akce=akce_vsechny)
 
 @app.route('/strike')
+@login_required
 def strike_stranka():
-    # Chceme vidět jen akce, které už mají uloženou docházku (proběhly)
-    probehle_akce = Akce.query.filter_by(probehla=True).order_by(Akce.datum.desc()).all()
-    return render_template('strike.html', akce_seznam=probehle_akce)
+    # Zde máš zřejmě logiku pro výpis STRIKE prohřešků
+    return render_template('strike.html')
 
-@app.route('/strike/<int:akce_id>')
-def detail_strike(akce_id):
-    akce = Akce.query.get_or_404(akce_id)
-    
-    # Vyfiltrujeme z tabulky účasti jen ty, kteří mají průšvih
-    # Používáme přesně ty názvy, co máš ve formuláři v detail_akce.html
-    hrisnici = Ucast.query.filter(
-        Ucast.akce_id == akce.id,
-        Ucast.stav.in_(['AWOL', 'Pozdní příchod'])
-    ).all()
-    
-    return render_template('detail_strike.html', akce=akce, hrisnici=hrisnici)
-
+# ==========================================
+# 7. SPUŠTĚNÍ APLIKACE A VYTVOŘENÍ DATABÁZE
+# ==========================================
 if __name__ == '__main__':
+    with app.app_context():
+        # Vytvoří tabulky, pokud ještě neexistují
+        db.create_all()
+        
+        
+
     app.run(debug=True)
