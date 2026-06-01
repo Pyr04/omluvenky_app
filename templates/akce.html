@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plánování Akcí - SPEAR</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='akce.css') }}"
+    />
+  </head>
+  <body>
+    <div class="sidebar">
+      <div class="sidebar-brand">
+        <i class="fa-solid fa-crosshairs">SPARTANS</i>
+      </div>
+
+      <div class="sidebar-category">Uživatel</div>
+      <div class="sidebar-nav">
+        <a href="/" 
+          ><i class="fa-solid fa-desktop"></i> Seznam členů</a
+        >
+
+        <a href="/omluvenky" 
+          ><i class="fa-regular fa-calendar-check"></i> Omluvenky</a
+        >
+      </div>
+
+      <div class="sidebar-category">Akce</div>
+      <div class="sidebar-nav">
+        <a href="/akce" class="active"><i class="fa-solid fa-map-location-dot"></i> Akce </a>
+        <a href="/strike"><i class="fa-solid fa-triangle-exclamation"></i> STRIKE evidence</a>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="container" style="display: block">
+        
+        <h1>Plánovač Operací</h1>
+
+        <div class="form-box">
+          <h2>Vytvořit novou událost</h2>
+          <form action="/akce" method="POST" class="form-group">
+            <label for="nazev">Název akce:</label>
+            <input
+              type="text"
+              id="nazev"
+              name="nazev"
+              placeholder="např. Operace Gothic Serpent"
+              required
+              style="flex: 1; min-width: 250px"
+            />
+
+            <label for="typ_id">Typ:</label>
+            <select id="typ_id" name="typ_id" required>
+              <option value="" disabled selected>-- Vyber typ --</option>
+              {% for t in typy_akci %}
+              <option value="{{ t.id }}">{{ t.nazev }}</option>
+              {% endfor %}
+            </select>
+
+            <label for="datum">Datum:</label>
+            <input type="date" id="datum" name="datum" required />
+
+            <button type="submit">Zapsat do kalendáře</button>
+          </form>
+        </div>
+
+        <h2>Plánované události</h2>
+        <table>
+          <tr>
+            <th>Datum</th>
+            <th>Typ události</th>
+            <th>Názevc</th>
+            <th>Status</th>
+            <th>Složka operace</th>
+          </tr>
+          {% for akce in akce_seznam %}
+          <tr>
+            <td style="font-weight: bold; color: #fff">{{ akce.datum }}</td>
+            <td style="color: #aaa">{{ akce.typ_akce.nazev }}</td>
+            <td class="cell-name">{{ akce.nazev }}</td>
+
+            <td
+              class="{% if not akce.probehla %}status-neprobehla{% else %}status-probehla{% endif %}"
+            >
+              {% if not akce.probehla %} Neproběhla {% else %} Proběhla {% endif
+              %}
+            </td>
+
+            <td>
+                        <div style="display: flex; gap: 10px;">
+                            <a href="/akce/{{ akce.id }}">
+                                <button class="action-btn">Záznam docházky</button>
+                            </a>
+                            <form action="/smazat_akci/{{ akce.id }}" method="POST" onsubmit="return confirm('Opravdu chceš smazat tuto operaci? Zmizí i veškerá docházka k ní vázaná!');" style="margin: 0;">
+                                <button type="submit" style="background-color: #8b0000; border-color: #4a0000;">Smazat</button>
+                            </form>
+                        </div>
+                    </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" style="color: #555; font-style: italic">
+              Aktuálně nejsou naplánovány žádné operace.
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  </body>
+</html>

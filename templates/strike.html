@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STRIKE Systém - SPEAR</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='strike.css') }}">
+</head>
+<body>
+
+    <div class="sidebar">
+      <div class="sidebar-brand">
+        <i class="fa-solid fa-crosshairs">SPARTANS</i>
+      </div>
+
+      <div class="sidebar-category">Uživatel</div>
+      <div class="sidebar-nav">
+        <a href="/" >
+            <i class="fa-solid fa-desktop"></i> Seznam členů</a>
+
+        <a href="/omluvenky"
+          ><i class="fa-regular fa-calendar-check"></i> Omluvenky</a
+        >
+      </div>
+
+      <div class="sidebar-category">Akce</div>
+      <div class="sidebar-nav">
+        <a href="/akce"><i class="fa-solid fa-map-location-dot"></i> Akce </a>
+        <a href="/strike" class="active"><i class="fa-solid fa-triangle-exclamation"></i> STRIKE evidence</a>
+      </div>
+    </div>
+
+    <div class="main-content">
+        <div class="container" style="display: block;">
+            
+            <h1 class="strike-title">STRIKES</h1>
+            <p class="strike-subtitle">Zde jsou vypsány pouze operace s již uzavřenou a potvrzenou docházkou.</p>
+
+            <table>
+                <tr>
+                    <th>Datum</th>
+                    <th>Typ události</th>
+                    <th>Název</th>
+                    <th>Vyhodnocení</th>
+                </tr>
+                {% for akce in akce_seznam %}
+                <tr>
+                    <td class="text-date">{{ akce.datum }}</td>
+                    <td class="text-type">{{ akce.typ_akce.nazev }}</td>
+                    <td class="cell-name">{{ akce.nazev }}</td>
+                    <td>
+                        <a href="/strike/{{ akce.id }}">
+                            <button class="btn-strike"><i class="fa-solid fa-list"></i> Zobrazit vyhodnocení</button>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-type" style="font-style: italic;">Žádné operace k vyhodnocení.</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+        </div>
+    </div>
+
+</body>
+</html>

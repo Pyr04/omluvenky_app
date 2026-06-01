@@ -11,32 +11,40 @@
 <body>
 
     <div class="sidebar">
-        <div class="sidebar-brand">
-            <i class="fa-solid fa-crosshairs"></i> SPEAR <span>by SPARTANS</span>
-        </div>
-        
-        <div class="sidebar-category">Uživatel</div>
-        <div class="sidebar-nav">
-            <a href="/" class="active"><i class="fa-solid fa-desktop"></i> Seznam členů</a>
-            
-            <a href="/omluvenky"><i class="fa-regular fa-calendar-check"></i> Omluvenky</a>
-        </div>
+      <div class="sidebar-brand">
+        <i class="fa-solid fa-crosshairs">SPARTANS</i>
+      </div>
 
-        
+      <div class="sidebar-category">Uživatel</div>
+      <div class="sidebar-nav">
+        <a href="/" class="active"
+          ><i class="fa-solid fa-desktop"></i> Seznam členů</a
+        >
+
+        <a href="/omluvenky"
+          ><i class="fa-regular fa-calendar-check"></i> Omluvenky</a
+        >
+      </div>
+
+      <div class="sidebar-category">Akce</div>
+      <div class="sidebar-nav">
+        <a href="/akce"><i class="fa-solid fa-map-location-dot"></i> Akce </a>
+        <a href="/strike"><i class="fa-solid fa-triangle-exclamation"></i> STRIKE evidence</a>
+      </div>
     </div>
 
     <div class="main-content">
+        <a href="/" style="color: #888; text-decoration: none; margin-bottom: 20px; display: inline-block;">← Zpět na seznam členů</a>
         <div class="container">
             
             <div class="left-column">
-                <div class="accent-line"></div>
+                
                 <h1>{{ clen.jmeno }}</h1>
                 <div class="subtitle">{{ clen.hodnost.nazev }}</div>
                 
-                <h2>Demografie & Status</h2>
+                <h2>Status</h2>
                 <div style="display: grid; grid-template-columns: 140px 1fr; gap: 12px; margin-bottom: 30px;">
-                    <div style="font-weight: bold; color: #fff;">Status:</div>
-                    <div style="color: #888;">Aktivní</div>
+                    
                     
                     <div style="font-weight: bold; color: #fff;">Hodnost:</div>
                     <div>
@@ -51,13 +59,8 @@
                     </div>
                 </div>
 
-                <h2>Systém Omluvenek</h2>
-                <form action="/pridat_omluvenku/{{ clen.id }}" method="POST" class="form-group">
-                    <input type="date" name="datum_od" required>
-                    <span style="color:#aaa;">do</span>
-                    <input type="date" name="datum_do" required>
-                    <button type="submit">Nahlásit nepřítomnost</button>
-                </form>
+                <h2>Omluvenky</h2>
+                
 
                 <table>
                     <tr>
@@ -77,12 +80,7 @@
                 </table>
             </div>
 
-            <div class="right-column">
-                <div class="portrait-box">
-                    <i class="fa-solid fa-user-astronaut" style="font-size: 5rem; color: #333;"></i>
-                </div>
-                <div class="badge-box">Specializace</div>
-            </div>
+            
 
         </div>
     </div>

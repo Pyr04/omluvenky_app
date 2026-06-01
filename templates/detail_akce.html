@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Záznam Operace - {{ akce.nazev }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='akce.css') }}">
+</head>
+<body>
+
+    <div class="sidebar">
+      <div class="sidebar-brand">
+        <i class="fa-solid fa-crosshairs">SPARTANS</i>
+      </div>
+
+      <div class="sidebar-category">Uživatel</div>
+      <div class="sidebar-nav">
+        <a href="/" 
+          ><i class="fa-solid fa-desktop"></i> Seznam členů</a
+        >
+
+        <a href="/omluvenky" 
+          ><i class="fa-regular fa-calendar-check"></i> Omluvenky</a
+        >
+      </div>
+
+      <div class="sidebar-category">Akce</div>
+      <div class="sidebar-nav">
+        <a href="/akce" class="active"><i class="fa-solid fa-map-location-dot"></i> Akce </a>
+        <a href="/strike"><i class="fa-solid fa-triangle-exclamation"></i> STRIKE evidence</a>
+      </div>
+    </div>
+
+    <div class="main-content">
+        <div class="container" style="display: block;">
+            
+            <a href="/akce" style="color: #888; text-decoration: none; margin-bottom: 20px; display: inline-block;">← Zpět na seznam akcí</a>
+            
+           <h1>{{ akce.nazev }}</h1>
+            <div style="font-size: 1.2rem; color: #aaa; margin-bottom: 40px; font-family: 'Oswald', sans-serif;">
+                {{ akce.typ_akce.nazev }} | 
+                Datum: <span style="color: #fff;">{{ akce.datum }}</span> | 
+                Status operace: 
+                <span class="{% if not akce.probehla %}status-neprobehla{% else %}status-probehla{% endif %}">
+                    {% if not akce.probehla %}Neproběhla{% else %}Proběhla{% endif %}
+                </span>
+            </div>
+            <h2>Prezenční listina jednotky</h2>
+            
+            <form action="/akce/{{ akce.id }}" method="POST">
+                <table>
+                    <tr>
+                        <th>ID</th>
+                        <th>Jméno</th>
+                        <th>Hodnost</th>
+                        <th>Stav účasti</th>
+                    </tr>
+                    {% for clen in clenove %}
+                    <tr>
+                        <td class="cell-id">#{{ clen.id }}</td>
+                        <td class="cell-name">{{ clen.jmeno }}</td>
+                        <td class="cell-rank">{{ clen.hodnost.nazev }}</td>
+                        <td>
+                            {% set aktualni_stav = ucast_dict.get(clen.id, 'Nezadáno') %}
+                            
+                            {% if aktualni_stav == 'Omluven' %}
+                                <span style="color: #03a9f4; font-weight: bold;"> Omluven (Zapsáno v systému)</span>
+                                <input type="hidden" name="stav_{{ clen.id }}" value="Omluven_disabled">
+                            {% else %}
+                                <select name="stav_{{ clen.id }}" style="padding: 5px; width: 200px;">
+                                    <option value="Nezadáno" {% if aktualni_stav == 'Nezadáno' %}selected{% endif %}>-- Nezadáno --</option>
+                                    <option value="Přítomen" {% if aktualni_stav == 'Přítomen' %}selected{% endif %}>PŘÍTOMEN</option>
+                                    <option value="Pozdní příchod" {% if aktualni_stav == 'Pozdní příchod' %}selected{% endif %}>POZDNÍ PŘÍCHOD</option>
+                                    <option value="AWOL" {% if aktualni_stav == 'AWOL' %}selected{% endif %}>NEOMLUVEN</option>
+                                </select>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                
+                <div style="margin-top: 20px;">
+                    <button type="submit" style="background-color: #1a3b1a; border-color: #2a5a2a;">Uložit docházku do záznamu</button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+</body>
+</html>

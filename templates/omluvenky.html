@@ -11,20 +11,31 @@
 <body>
 
     <div class="sidebar">
-        <div class="sidebar-brand">
-            <i class="fa-solid fa-crosshairs"></i> SPEAR <span>by SPARTANS</span>
-        </div>
-        
-        <div class="sidebar-category">Uživatel</div>
-        <div class="sidebar-nav">
-            <a href="/"><i class="fa-solid fa-desktop"></i> Seznam členů</a>
-            <a href="/omluvenky" class="active"><i class="fa-regular fa-calendar-check"></i> Omluvenky</a>
-        </div>
+      <div class="sidebar-brand">
+        <i class="fa-solid fa-crosshairs">SPARTANS</i>
+      </div>
+
+      <div class="sidebar-category">Uživatel</div>
+      <div class="sidebar-nav">
+        <a href="/" 
+          ><i class="fa-solid fa-desktop"></i> Seznam členů</a
+        >
+
+        <a href="/omluvenky" class="active"
+          ><i class="fa-regular fa-calendar-check"></i> Omluvenky</a
+        >
+      </div>
+
+      <div class="sidebar-category">Akce</div>
+      <div class="sidebar-nav">
+        <a href="/akce"><i class="fa-solid fa-map-location-dot"></i> Akce </a>
+        <a href="/strike"><i class="fa-solid fa-triangle-exclamation"></i> STRIKE evidence</a>
+      </div>
     </div>
 
     <div class="main-content">
         <div class="container" style="display: block;">
-            <div class="accent-line"></div>
+            
             <h1>Správa Omluvenek</h1>
             
             <div class="form-box">
@@ -51,7 +62,7 @@
             <h2>Aktivní absence letky</h2>
             <table>
                 <tr>
-                    <th>Člen (Callsign)</th>
+                    <th>Jméno</th>
                     <th>Absence OD</th>
                     <th>Absence DO</th>
                 </tr>
