@@ -1,0 +1,137 @@
+/* Celkové nastavení stránky - Flexbox pro boční panel a obsah */
+body {
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    min-height: 100vh;
+}
+
+/* =========================================
+   BOČNÍ PANEL (SIDEBAR)
+========================================= */
+.sidebar {
+    width: 250px;
+    background-color: #16161a;
+    border-right: 1px solid #2a2a2a;
+    display: flex;
+    flex-direction: column;
+    padding-top: 20px;
+    flex-shrink: 0;
+}
+.sidebar-brand {
+    color: #fff;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.8rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+    padding: 0 20px 20px 20px;
+    border-bottom: 1px solid #2a2a2a;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.sidebar-brand span { font-size: 1rem; color: #888; font-weight: normal; letter-spacing: 0; }
+.sidebar-category { color: #777; font-size: 0.8rem; text-transform: uppercase; font-weight: bold; margin: 15px 20px 5px 20px; letter-spacing: 1px; }
+.sidebar-nav { display: flex; flex-direction: column; }
+.sidebar-nav a {
+    color: #a0a0a0;
+    text-decoration: none;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+.sidebar-nav a:hover { background-color: #222; color: #fff; }
+.sidebar-nav a.active { background-color: #222; color: #fff; border-left-color: #0056b3; }
+.sidebar-nav a i { width: 15px; text-align: center; }
+
+/* =========================================
+   HLAVNÍ OBSAH
+========================================= */
+.main-content {
+    flex: 1;
+    padding: 40px;
+    background-color: #121212;
+    box-sizing: border-box;
+}
+
+/* Hlavní kontejner */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+/* Nadpisy a linka */
+h1, h2 { font-family: 'Oswald', sans-serif; text-transform: uppercase; color: #ffffff; letter-spacing: 1px; }
+h1 { font-size: 2.5rem; margin-top: 0; margin-bottom: 20px; }
+h2 { font-size: 1.5rem; margin-top: 0; margin-bottom: 20px; }
+.accent-line { width: 120px; height: 4px; background-color: #0056b3; margin-bottom: 30px; }
+
+/* Box pro přidávání členů */
+.form-box { background-color: #1a1a1a; padding: 25px; border: 1px solid #333; margin-bottom: 50px; }
+.form-group { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
+label { font-weight: bold; color: #aaa; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+input, select, button { background-color: #222; color: #fff; border: 1px solid #444; padding: 10px 15px; font-family: 'Roboto', sans-serif; }
+
+/* Tlačítka */
+button { background-color: #3b0000; border: 1px solid #5a0000; cursor: pointer; font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 1px; transition: background 0.2s; }
+button:hover { background-color: #6a0000; }
+.action-btn { background-color: #1a3b1a; border-color: #2a5a2a; }
+.action-btn:hover { background-color: #2a5a2a; }
+.delete-btn { background-color: #8b0000; border-color: #5a0000; }
+.delete-btn:hover { background-color: #c90000; }
+
+/* Tabulka členů */
+.table-header { margin-top: 40px; }
+table { width: 100%; border-collapse: collapse; background-color: #1a1a1a; border: 1px solid #333; }
+th, td { padding: 15px; text-align: left; border-bottom: 1px solid #222; }
+th { background-color: #111; font-family: 'Oswald', sans-serif; color: #888; text-transform: uppercase; }
+tr:hover { background-color: #252525; }
+td a { text-decoration: none; }
+.cell-id { color: #666; font-family: monospace; font-size: 1.1rem; }
+.cell-name { font-weight: bold; color: #fff; font-size: 1.1rem; }
+.cell-rank { color: #aaa; }
+
+@media (max-width: 768px) {
+    /* 1. Hlavní rozložení: Boční panel už nebude vlevo, ale nahoře */
+    body {
+        flex-direction: column;
+    }
+    
+    /* 2. Změna bočního panelu na plnou šířku */
+    .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #2a2a2a;
+        padding-bottom: 20px;
+    }
+
+    /* 3. Menší okraje, ať na mobilu ušetříme místo */
+    .main-content {
+        padding: 15px;
+    }
+
+    h1 {
+        font-size: 2rem; /* Menší nadpis na telefonu */
+    }
+
+    /* 4. Tabulky: Aby neroztrhly stránku, půjde jimi rolovat do stran */
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    /* 5. Pravý sloupec na profilu (fotografie) roztáhneme přes celý displej */
+    .right-column {
+        width: 100%;
+    }
+    
+    .portrait-box {
+        height: 300px; /* Trochu menší fotka na mobilu */
+    }
+}

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Správa personálu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fa-solid fa-crosshairs"></i> SPEAR <span>by SPARTANS</span>
+        </div>
+        
+        <div class="sidebar-category">Uživatel</div>
+        <div class="sidebar-nav">
+            <a href="#" class="active"><i class="fa-solid fa-desktop"></i> Seznam členů</a>
+            
+            <a href="/omluvenky"><i class="fa-regular fa-calendar-check"></i> Omluvenky</a>
+        </div>
+
+       
+    </div>
+
+    <div class="main-content">
+        <div class="container" style="display: block;">
+            <div class="accent-line"></div>
+            <h1>Dashboard Letky</h1>
+            
+            <div class="form-box">
+                <h2>Nábor / Přidat do evidence</h2>
+                <form action="/pridat" method="POST" class="form-group">
+                    <label for="jmeno">Jméno / Callsign:</label>
+                    <input type="text" id="jmeno" name="jmeno" placeholder="např. Adam Wick" required>
+
+                    <label for="hodnost">Hodnost:</label>
+                    <select id="hodnost" name="hodnost">
+                        {% for h in hodnosti %}
+                            <option value="{{ h.id }}">{{ h.nazev }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <button type="submit">Zapsat nového člena</button>
+                </form>
+            </div>
+
+            <h2>Aktivní personál</h2>
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Jméno / Callsign</th>
+                    <th>Hodnost</th>
+                    <th>Složka</th>
+                </tr>
+                {% for clen in clenove %}
+                <tr>
+                    <td class="cell-id">#{{ clen.id }}</td>
+                    <td class="cell-name">{{ clen.jmeno }}</td>
+                    <td class="cell-rank">{{ clen.hodnost.nazev }}</td>
+                    <td>
+                        <div style="display: flex; gap: 10px;">
+                            <a href="/profil/{{ clen.id }}"><button class="action-btn">Otevřít profil</button></a>
+                            <form action="/smazat_clena/{{ clen.id }}" method="POST" onsubmit="return confirm('Opravdu smazat?');">
+                                <button type="submit" class="delete-btn">Smazat</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>Centrální Omluvenky - SPEAR</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='omluvenky.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            <i class="fa-solid fa-crosshairs"></i> SPEAR <span>by SPARTANS</span>
+        </div>
+        
+        <div class="sidebar-category">Uživatel</div>
+        <div class="sidebar-nav">
+            <a href="/"><i class="fa-solid fa-desktop"></i> Seznam členů</a>
+            <a href="/omluvenky" class="active"><i class="fa-regular fa-calendar-check"></i> Omluvenky</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="container" style="display: block;">
+            <div class="accent-line"></div>
+            <h1>Správa Omluvenek</h1>
+            
+            <div class="form-box">
+                <h2>Zapsat novou absenci</h2>
+                <form action="/omluvenky" method="POST" class="form-group">
+                    <label for="clen_id">Vyber člena:</label>
+                    <select id="clen_id" name="clen_id" required>
+                        <option value="" disabled selected>-- Zvol operátora --</option>
+                        {% for c in clenove %}
+                            <option value="{{ c.id }}">{{ c.jmeno }} ({{ c.hodnost.nazev }})</option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="datum_od">Od:</label>
+                    <input type="date" id="datum_od" name="datum_od" required>
+
+                    <label for="datum_do">Do:</label>
+                    <input type="date" id="datum_do" name="datum_do" required>
+
+                    <button type="submit">Zapsat absenci</button>
+                </form>
+            </div>
+
+            <h2>Aktivní absence letky</h2>
+            <table>
+                <tr>
+                    <th>Člen (Callsign)</th>
+                    <th>Absence OD</th>
+                    <th>Absence DO</th>
+                </tr>
+                {% for omluvenka in omluvenky %}
+                <tr>
+                    <td class="cell-name">{{ omluvenka.clen.jmeno }}</td>
+                    <td>{{ omluvenka.datum_od }}</td>
+                    <td>{{ omluvenka.datum_do }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="color: #555; font-style: italic;">Aktuálně nejsou hlášeny žádné absence.</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+        </div>
+    </div>
+
+</body>
+</html>
