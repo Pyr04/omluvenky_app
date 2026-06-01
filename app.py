@@ -14,7 +14,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# Tvé velitelské heslo (nyní Spartans160)
+# Tvé velitelské heslo
 VELITEL_HESLO_HASH = generate_password_hash("Spartans160")
 
 # ==========================================
@@ -72,7 +72,8 @@ def login():
         zadane_heslo = request.form.get('heslo')
         if check_password_hash(VELITEL_HESLO_HASH, zadane_heslo):
             session['prihlasen'] = True
-            return redirect(url_for('dashboard'))
+            # Po úspěšném přihlášení tě to teď hodí na zamčený seznam členů
+            return redirect(url_for('index'))
         else:
             chyba = "Přístup odepřen: Nesprávné velitelské heslo."
     return render_template('login.html', chyba=chyba)
@@ -80,12 +81,13 @@ def login():
 @app.route('/logout')
 def logout():
     session.pop('prihlasen', None)
+    # Po odhlášení tě to hodí zpět na veřejný dashboard
     return redirect(url_for('dashboard'))
 
 # ==========================================
-# 5. VEŘEJNÝ DASHBOARD (BEZ ZÁMKU)
+# 5. VEŘEJNÝ DASHBOARD (Změněno na hlavní trasu '/')
 # ==========================================
-@app.route('/dashboard')
+@app.route('/')
 def dashboard():
     pocet_clenu = Clen.query.count()
     pocet_akci = Akce.query.filter_by(probehla=True).count()
@@ -130,7 +132,8 @@ def dashboard():
 # ==========================================
 # 6. ZAMČENÉ TRASY (ADMINISTRACE DATABÁZE)
 # ==========================================
-@app.route('/')
+# Změněno z '/' na '/seznam'
+@app.route('/seznam')
 @login_required
 def index():
     clenove = Clen.query.all()
@@ -160,24 +163,20 @@ def omluvenky_stranka():
 @app.route('/akce', methods=['GET', 'POST'])
 @login_required
 def akce_stranka():
-    # Zde máš zřejmě logiku pro přidávání a výpis akcí
     akce_vsechny = Akce.query.order_by(Akce.datum.desc()).all()
     return render_template('akce.html', akce=akce_vsechny)
 
 @app.route('/strike')
 @login_required
 def strike_stranka():
-    # Zde máš zřejmě logiku pro výpis STRIKE prohřešků
     return render_template('strike.html')
+
+# (Pokud tam máš ještě funkce jako smazat_clena apod., nech je pod tímto se značkou @login_required)
 
 # ==========================================
 # 7. SPUŠTĚNÍ APLIKACE A VYTVOŘENÍ DATABÁZE
 # ==========================================
 if __name__ == '__main__':
     with app.app_context():
-        # Vytvoří tabulky, pokud ještě neexistují
         db.create_all()
-        
-        
-
     app.run(debug=True)

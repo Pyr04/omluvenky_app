@@ -18,7 +18,7 @@
 
       <div class="sidebar-category">Uživatel</div>
       <div class="sidebar-nav">
-        <a href="/"><i class="fa-solid fa-desktop"></i> Seznam členů</a>
+        <a href="/seznam"><i class="fa-solid fa-desktop"></i> Seznam členů</a>
         <a href="/omluvenky"><i class="fa-regular fa-calendar-check"></i> Omluvenky</a>
       </div>
 
@@ -30,7 +30,7 @@
 
       <div class="sidebar-category">Velení</div>
         <div class="sidebar-nav">
-            <a href="/dashboard" class="active"><i class="fa-solid fa-chart-line"></i> Přehled (HQ)</a>
+            <a href="/" class="active"><i class="fa-solid fa-chart-line"></i> Přehled (HQ)</a>
         </div>
         
       <div style="margin-top: auto; padding-top: 20px;">
@@ -112,7 +112,9 @@
                 </div>
             </div>
 
-        </div> </div> <script>
+        </div> </div> 
+
+    <script>
         // Nastavení tmavého režimu pro texty v grafech
         Chart.defaults.color = '#888';
         Chart.defaults.font.family = "'Roboto', sans-serif";
@@ -122,10 +124,11 @@
         new Chart(attCtx, {
             type: 'line',
             data: {
-                labels: {{ akce_labels | tojson }},
+                // OPRAVENO: Přidáno | safe
+                labels: {{ akce_labels | tojson | safe }},
                 datasets: [{
                     label: 'Počet nasazených operátorů',
-                    data: {{ akce_ucast_counts | tojson }},
+                    data: {{ akce_ucast_counts | tojson | safe }},
                     backgroundColor: 'rgba(76, 175, 80, 0.2)',
                     borderColor: '#4caf50',
                     borderWidth: 2,
@@ -150,9 +153,10 @@
         new Chart(rankCtx, {
             type: 'pie',
             data: {
-                labels: {{ hodnosti_labels | tojson }},
+                // OPRAVENO: Přidáno | safe
+                labels: {{ hodnosti_labels | tojson | safe }},
                 datasets: [{
-                    data: {{ hodnosti_counts | tojson }},
+                    data: {{ hodnosti_counts | tojson | safe }},
                     backgroundColor: ['#03a9f4', '#4caf50', '#ff9800', '#9c27b0', '#f44336', '#009688'],
                     borderColor: '#1a1a1a',
                     borderWidth: 2
@@ -166,10 +170,11 @@
         new Chart(strikeCtx, {
             type: 'bar',
             data: {
-                labels: {{ hrisnici_labels | tojson }},
+                // OPRAVENO: Přidáno | safe
+                labels: {{ hrisnici_labels | tojson | safe }},
                 datasets: [{
                     label: 'Počet STRIKE (AWOL / Pozdě)',
-                    data: {{ hrisnici_counts | tojson }},
+                    data: {{ hrisnici_counts | tojson | safe }},
                     backgroundColor: '#f44336',
                     borderColor: '#b71c1c',
                     borderWidth: 1,
