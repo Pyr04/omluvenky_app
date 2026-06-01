@@ -1,31 +1,25 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="cs">
-  <head>
-    <meta charset="UTF-8" />
+<head>
+    <meta charset="UTF-8">
     <title>Centrální Omluvenky - SPEAR</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400;700&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='omluvenky.css') }}"
-    />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  </head>
-  <body>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='omluvenky.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
     <div class="sidebar">
       <div class="sidebar-brand">
-        <i class="fa-solid fa-crosshairs">SPARTANS</i>
+        <i> SPARTANS</i>
       </div>
 
       <div class="sidebar-category">Uživatel</div>
       <div class="sidebar-nav">
-        <a href="/seznam"><i class="fa-solid fa-desktop"></i> Seznam členů</a>
+        <a href="/" 
+          ><i class="fa-solid fa-desktop"></i> Seznam členů</a
+        >
 
         <a href="/omluvenky" class="active"
           ><i class="fa-regular fa-calendar-check"></i> Omluvenky</a
@@ -35,114 +29,90 @@
       <div class="sidebar-category">Akce</div>
       <div class="sidebar-nav">
         <a href="/akce"><i class="fa-solid fa-map-location-dot"></i> Akce </a>
-        <a href="/strike"
-          ><i class="fa-solid fa-triangle-exclamation"></i> STRIKE evidence</a
-        >
+        <a href="/strike"><i class="fa-solid fa-triangle-exclamation"></i> STRIKE evidence</a>
       </div>
       <div class="sidebar-category">Velení</div>
       <div class="sidebar-nav">
-        <a href="/"><i class="fa-solid fa-chart-line"></i> Přehled (HQ)</a>
+          <a href="/dashboard"><i class="fa-solid fa-chart-line"></i> Přehled (HQ)</a>
       </div>
-      <div style="margin-top: auto; padding-top: 20px;">
-            <a href="/logout" style="color: #d32f2f; border-top: 1px solid #2a2a2a; margin-top: 20px;"><i class="fa-solid fa-power-off"></i> Odhlásit velitele</a>
-        </div>
     </div>
 
     <div class="main-content">
-      <div class="container" style="display: block">
-        <h1>Správa Omluvenek</h1>
+        <div class="container" style="display: block;">
+            
+            <h1>Správa Omluvenek</h1>
+            
+            <div class="form-box">
+                <h2>Zapsat novou absenci</h2>
+                <form action="/omluvenky" method="POST" class="form-group">
+                    <label for="clen_id">Vyber člena:</label>
+                    <select id="clen_id" name="clen_id" required>
+                        <option value="" disabled selected>-- Zvol operátora --</option>
+                        {% for c in clenove %}
+                            <option value="{{ c.id }}">{{ c.jmeno }} ({{ c.hodnost.nazev }})</option>
+                        {% endfor %}
+                    </select>
 
-        <div class="form-box">
-          <h2>Zapsat novou absenci</h2>
-          <form action="/omluvenky" method="POST" class="form-group">
-            <label for="clen_id">Vyber člena:</label>
-            <select id="clen_id" name="clen_id" required>
-              <option value="" disabled selected>-- Zvol operátora --</option>
-              {% for c in clenove %}
-              <option value="{{ c.id }}">
-                {{ c.jmeno }} ({{ c.hodnost.nazev }})
-              </option>
-              {% endfor %}
-            </select>
+                    <label for="datum_od">Od:</label>
+                    <input type="date" id="datum_od" name="datum_od" required>
 
-            <label for="datum_od">Od:</label>
-            <input type="date" id="datum_od" name="datum_od" required />
+                    <label for="datum_do">Do:</label>
+                    <input type="date" id="datum_do" name="datum_do" required>
 
-            <label for="datum_do">Do:</label>
-            <input type="date" id="datum_do" name="datum_do" required />
+                    <button type="submit">Zapsat absenci</button>
+                </form>
+            </div>
 
-            <button type="submit">Zapsat absenci</button>
-          </form>
+            <h2>Aktivní absence letky</h2>
+            <div style="margin-bottom: 20px; position: relative;">
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 15px; top: 12px; color: #888;"></i>
+                <input type="text" id="search-omluvenky" onkeyup="hledatOmluvenku()" placeholder="Hledat člena podle jména..." style="width: 100%; padding: 10px 10px 10px 40px; background-color: #1a1a1a; border: 1px solid #333; color: #fff; font-family: 'Roboto', sans-serif; box-sizing: border-box; border-radius: 4px;">
+            </div>
+            
+            <table id="tabulka-omluvenek">
+                <tr>
+                    <th>Jméno</th>
+                    <th>Absence OD</th>
+                    <th>Absence DO</th>
+                </tr>
+                {% for omluvenka in omluvenky %}
+                <tr>
+                    <td class="cell-name">{{ omluvenka.clen.jmeno }}</td>
+                    <td>{{ omluvenka.datum_od }}</td>
+                    <td>{{ omluvenka.datum_do }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="color: #555; font-style: italic;">Aktuálně nejsou hlášeny žádné absence.</td>
+                </tr>
+                {% endfor %}
+            </table>
+
         </div>
-
-        <h2>Aktivní absence letky</h2>
-        <div style="margin-bottom: 20px; position: relative">
-          <i
-            class="fa-solid fa-magnifying-glass"
-            style="position: absolute; left: 15px; top: 12px; color: #888"
-          ></i>
-          <input
-            type="text"
-            id="search-omluvenky"
-            onkeyup="hledatOmluvenku()"
-            placeholder="Hledat člena podle jména..."
-            style="
-              width: 100%;
-              padding: 10px 10px 10px 40px;
-              background-color: #1a1a1a;
-              border: 1px solid #333;
-              color: #fff;
-              font-family: &quot;Roboto&quot;, sans-serif;
-              box-sizing: border-box;
-              border-radius: 4px;
-            "
-          />
-        </div>
-
-        <table id="tabulka-omluvenek">
-          <tr>
-            <th>Jméno</th>
-            <th>Absence OD</th>
-            <th>Absence DO</th>
-          </tr>
-          {% for omluvenka in omluvenky %}
-          <tr>
-            <td class="cell-name">{{ omluvenka.clen.jmeno }}</td>
-            <td>{{ omluvenka.datum_od }}</td>
-            <td>{{ omluvenka.datum_do }}</td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="3" style="color: #555; font-style: italic">
-              Aktuálně nejsou hlášeny žádné absence.
-            </td>
-          </tr>
-          {% endfor %}
-        </table>
-      </div>
     </div>
 
     <script>
-      function hledatOmluvenku() {
-        var input = document.getElementById("search-omluvenky");
-        var filter = input.value.toLowerCase();
-        var table = document.getElementById("tabulka-omluvenek");
-        var tr = table.getElementsByTagName("tr");
+        function hledatOmluvenku() {
+            var input = document.getElementById("search-omluvenky");
+            var filter = input.value.toLowerCase();
+            var table = document.getElementById("tabulka-omluvenek");
+            var tr = table.getElementsByTagName("tr");
 
-        for (var i = 1; i < tr.length; i++) {
-          // ZDE POZOR: [0] znamená hledání v 1. sloupci. Pokud je jméno ve 2. sloupci, dej sem [1].
-          var td = tr[i].getElementsByTagName("td")[0];
-
-          if (td) {
-            var txtValue = td.textContent || td.innerText;
-            if (txtValue.toLowerCase().indexOf(filter) > -1) {
-              tr[i].style.display = "";
-            } else {
-              tr[i].style.display = "none";
+            for (var i = 1; i < tr.length; i++) {
+                // ZDE POZOR: [0] znamená hledání v 1. sloupci. Pokud je jméno ve 2. sloupci, dej sem [1].
+                var td = tr[i].getElementsByTagName("td")[0]; 
+                
+                if (td) {
+                    var txtValue = td.textContent || td.innerText;
+                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
             }
-          }
         }
-      }
     </script>
-  </body>
+
+</body>
 </html>
