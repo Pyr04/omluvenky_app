@@ -107,9 +107,17 @@ def zmenit_hodnost(clen_id):
 @app.route('/smazat_clena/<int:clen_id>', methods=['POST'])
 def smazat_clena(clen_id):
     clen = Clen.query.get_or_404(clen_id)
+    
+    
     Omluvenka.query.filter_by(clen_id=clen_id).delete()
+    
+    
+    Ucast.query.filter_by(clen_id=clen_id).delete()
+    
+    
     db.session.delete(clen)
     db.session.commit()
+    
     return redirect(url_for('index'))
 
 @app.route('/omluvenky', methods=['GET', 'POST'])
