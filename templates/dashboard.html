@@ -39,9 +39,7 @@
                   <i class="fa-solid fa-power-off"></i> Odhlásit velitele
               </a>
           {% else %}
-              <a href="/login" style="color: #4caf50; border-top: 1px solid #2a2a2a; margin-top: 20px;">
-                  <i class="fa-solid fa-shield-halved"></i> Přihlášení velitele
-              </a>
+              
           {% endif %}
       </div>
     </div>
@@ -49,7 +47,7 @@
     <div class="main-content">
         <div class="container" style="display: block;">
             
-            <h1 style="margin-bottom: 5px;">Hlavní velitelství</h1>
+            <h1 style="margin-bottom: 5px;">DASHBOARD</h1>
             <p style="color: #aaa; margin-top: 0;">Souhrnné statistiky a operační připravenost.</p>
 
             <div class="dashboard-grid">
@@ -103,12 +101,6 @@
                         <canvas id="rankChart"></canvas>
                     </div>
                 </div>
-
-                <div class="chart-container">
-                    <h2>Černá listina (Nejvíce STRIKE)</h2>
-                    <div class="canvas-wrapper">
-                        <canvas id="strikeChart"></canvas>
-                    </div>
                 </div>
             </div>
 
@@ -161,32 +153,7 @@
             options: { responsive: true, maintainAspectRatio: false }
         });
 
-        // --- GRAF 3: Černá listina (Bar Chart) ---
-        const strikeCtx = document.getElementById('strikeChart').getContext('2d');
-        new Chart(strikeCtx, {
-            type: 'bar',
-            data: {
-                labels: {{ hrisnici_labels | tojson }},
-                datasets: [{
-                    label: 'Počet STRIKE (AWOL / Pozdě)',
-                    data: {{ hrisnici_counts | tojson }},
-                    backgroundColor: '#f44336',
-                    borderColor: '#b71c1c',
-                    borderWidth: 1,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
-                },
-                plugins: {
-                    legend: { display: false }
-                }
-            }
-        });
+      
     </script>
 
 </body>
