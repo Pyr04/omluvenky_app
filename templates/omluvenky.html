@@ -5,7 +5,9 @@
     <title>Centrální Omluvenky - SPEAR</title>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='omluvenky.css') }}">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css"> <link rel="stylesheet" href="{{ url_for('static', filename='omluvenky.css') }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
@@ -17,13 +19,8 @@
 
       <div class="sidebar-category">Uživatel</div>
       <div class="sidebar-nav">
-        <a href="/" 
-          ><i class="fa-solid fa-desktop"></i> Seznam členů</a
-        >
-
-        <a href="/omluvenky" class="active"
-          ><i class="fa-regular fa-calendar-check"></i> Omluvenky</a
-        >
+        <a href="/" ><i class="fa-solid fa-desktop"></i> Seznam členů</a>
+        <a href="/omluvenky" class="active"><i class="fa-regular fa-calendar-check"></i> Omluvenky</a>
       </div>
 
       <div class="sidebar-category">Akce</div>
@@ -44,7 +41,8 @@
             
             <div class="form-box">
                 <h2>Zapsat novou absenci</h2>
-                <form action="/omluvenky" method="POST" class="form-group">
+                
+                <form action="/omluvenky" method="POST" class="form-group" onsubmit="return zkontrolovatRozmezi();">
                     <label for="clen_id">Vyber člena:</label>
                     <select id="clen_id" name="clen_id" required>
                         <option value="" disabled selected>-- Zvol operátora --</option>
@@ -53,11 +51,11 @@
                         {% endfor %}
                     </select>
 
-                    <label for="datum_od">Od:</label>
-                    <input type="date" id="datum_od" name="datum_od" required>
+                    <label for="datum_range">Vyberte období v kalendáři (Od - Do):</label>
+                    <input type="text" id="datum_range" placeholder="Klikněte pro zobrazení kalendáře..." required autocomplete="off" style="cursor: pointer;">
 
-                    <label for="datum_do">Do:</label>
-                    <input type="date" id="datum_do" name="datum_do" required>
+                    <input type="hidden" id="datum_od" name="datum_od">
+                    <input type="hidden" id="datum_do" name="datum_do">
 
                     <button type="submit">Zapsat absenci</button>
                 </form>
@@ -72,8 +70,12 @@
             <table id="tabulka-omluvenek">
                 <tr>
                     <th>Jméno</th>
-                    <th>Absence OD</th>
-                    <th>Absence DO</th>
+                    <th onclick="seraditOmluvenky(1)" style="cursor: pointer;" title="Klikni pro seřazení">
+                        Absence OD <i class="fa-solid fa-sort" style="margin-left: 5px; color: #888;"></i>
+                    </th>
+                    <th onclick="seraditOmluvenky(2)" style="cursor: pointer;" title="Klikni pro seřazení">
+                        Absence DO <i class="fa-solid fa-sort" style="margin-left: 5px; color: #888;"></i>
+                    </th>
                     <th>Akce</th>
                 </tr>
                 {% for omluvenka in omluvenky %}
@@ -99,7 +101,43 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/cs.js"></script>
+
     <script>
+        // INICIALIZACE BOOKING KALENDÁŘE
+        flatpickr("#datum_range", {
+            mode: "range",             // Umožní vybrat rozmezí Od - Do
+            locale: "cs",              // Český jazyk (Dny, měsíce)
+            dateFormat: "Y-m-d",       // Jak to uvidí uživatel (můžeš změnit na "d.m.Y")
+            altInput: true,            // Vytvoří hezké pole
+            altFormat: "d. m. Y",      // Formát zobrazený uživateli (český formát)
+            onChange: function(selectedDates, dateStr, instance) {
+                // Pokud uživatel vybral dvě data (Začátek i Konec)
+                if (selectedDates.length === 2) {
+                    // Převedeme je do formátu pro databázi (YYYY-MM-DD) a hodíme do skrytých polí
+                    document.getElementById('datum_od').value = instance.formatDate(selectedDates[0], "Y-m-d");
+                    document.getElementById('datum_do').value = instance.formatDate(selectedDates[1], "Y-m-d");
+                } else {
+                    document.getElementById('datum_od').value = "";
+                    document.getElementById('datum_do').value = "";
+                }
+            }
+        });
+
+        // Kontrola před odesláním formuláře
+        function zkontrolovatRozmezi() {
+            let od = document.getElementById('datum_od').value;
+            let do_datum = document.getElementById('datum_do').value;
+            
+            if (!od || !do_datum) {
+                alert("CHYBA: Musíš v kalendáři nakliknout začátek i konec absence (2 dny)!");
+                return false; // Zabrání odeslání
+            }
+            return true;
+        }
+
+        // Tvoje funkce z minula
         function hledatOmluvenku() {
             var input = document.getElementById("search-omluvenky");
             var filter = input.value.toLowerCase();
@@ -107,9 +145,7 @@
             var tr = table.getElementsByTagName("tr");
 
             for (var i = 1; i < tr.length; i++) {
-                // ZDE POZOR: [0] znamená hledání v 1. sloupci. Pokud je jméno ve 2. sloupci, dej sem [1].
                 var td = tr[i].getElementsByTagName("td")[0]; 
-                
                 if (td) {
                     var txtValue = td.textContent || td.innerText;
                     if (txtValue.toLowerCase().indexOf(filter) > -1) {
@@ -119,6 +155,28 @@
                     }
                 }
             }
+        }
+
+        let smerRazeniOmluvenek = true;
+        
+        function seraditOmluvenky(cisloSloupce) {
+            let table = document.getElementById("tabulka-omluvenek");
+            let rows = Array.from(table.rows).slice(1);
+            
+            if (rows.length === 0 || rows[0].getElementsByTagName("td").length === 1) return;
+
+            smerRazeniOmluvenek = !smerRazeniOmluvenek;
+
+            rows.sort((a, b) => {
+                let datumA = a.getElementsByTagName("td")[cisloSloupce].innerText;
+                let datumB = b.getElementsByTagName("td")[cisloSloupce].innerText;
+                
+                if (datumA < datumB) return smerRazeniOmluvenek ? 1 : -1;
+                if (datumA > datumB) return smerRazeniOmluvenek ? -1 : 1;
+                return 0;
+            });
+
+            rows.forEach(row => table.appendChild(row));
         }
     </script>
 

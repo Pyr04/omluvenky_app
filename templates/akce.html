@@ -79,11 +79,19 @@
         </div>
 
         <h2>Plánované události</h2>
-        <table>
+        
+        <div style="margin-bottom: 20px; position: relative;">
+            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 15px; top: 12px; color: #888;"></i>
+            <input type="text" id="search-akce" onkeyup="hledatAkci()" placeholder="Hledat podle názvu operace..." style="width: 100%; padding: 10px 10px 10px 40px; background-color: #1a1a1a; border: 1px solid #333; color: #fff; font-family: 'Roboto', sans-serif; box-sizing: border-box; border-radius: 4px;">
+        </div>
+
+        <table id="tabulka-akci">
           <tr>
-            <th>Datum</th>
+            <th onclick="seraditDatum('tabulka-akci')" style="cursor: pointer;" title="Klikni pro seřazení">
+                Datum <i class="fa-solid fa-sort" style="margin-left: 5px; color: #888;"></i>
+            </th>
             <th>Typ události</th>
-            <th>Názevc</th>
+            <th>Název</th>
             <th>Status</th>
             <th>Složka operace</th>
           </tr>
@@ -93,23 +101,20 @@
             <td style="color: #aaa">{{ akce.typ_akce.nazev }}</td>
             <td class="cell-name">{{ akce.nazev }}</td>
 
-            <td
-              class="{% if not akce.probehla %}status-neprobehla{% else %}status-probehla{% endif %}"
-            >
-              {% if not akce.probehla %} Neproběhla {% else %} Proběhla {% endif
-              %}
+            <td class="{% if not akce.probehla %}status-neprobehla{% else %}status-probehla{% endif %}">
+              {% if not akce.probehla %} Neproběhla {% else %} Proběhla {% endif %}
             </td>
 
             <td>
-                        <div style="display: flex; gap: 10px;">
-                            <a href="/akce/{{ akce.id }}">
-                                <button class="action-btn">Záznam docházky</button>
-                            </a>
-                            <form action="/smazat_akci/{{ akce.id }}" method="POST" onsubmit="return confirm('Opravdu chceš smazat tuto operaci? Zmizí i veškerá docházka k ní vázaná!');" style="margin: 0;">
-                                <button type="submit" style="background-color: #8b0000; border-color: #4a0000;">Smazat</button>
-                            </form>
-                        </div>
-                    </td>
+                <div style="display: flex; gap: 10px;">
+                    <a href="/akce/{{ akce.id }}">
+                        <button class="action-btn">Záznam docházky</button>
+                    </a>
+                    <form action="/smazat_akci/{{ akce.id }}" method="POST" onsubmit="return confirm('Opravdu chceš smazat tuto operaci? Zmizí i veškerá docházka k ní vázaná!');" style="margin: 0;">
+                        <button type="submit" style="background-color: #8b0000; border-color: #4a0000;">Smazat</button>
+                    </form>
+                </div>
+            </td>
           </tr>
           {% else %}
           <tr>
@@ -119,6 +124,53 @@
           </tr>
           {% endfor %}
         </table>
+      </div>
+    </div>
+
+    <script>
+        function hledatAkci() {
+            var input = document.getElementById("search-akce");
+            var filter = input.value.toLowerCase();
+            var table = document.getElementById("tabulka-akci");
+            var tr = table.getElementsByTagName("tr");
+
+            for (var i = 1; i < tr.length; i++) {
+                // Hledáme ve sloupci s indexem 2 (Název)
+                var td = tr[i].getElementsByTagName("td")[2]; 
+                if (td) {
+                    var txtValue = td.textContent || td.innerText;
+                    if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+
+        let razeniSestupneAkce = true;
+        function seraditDatum(tableId) {
+            let table = document.getElementById(tableId);
+            let rows = Array.from(table.rows).slice(1); // Přeskočíme hlavičku
+            
+            // Pojistka, pokud je tabulka prázdná
+            if (rows.length === 0 || rows[0].getElementsByTagName("td").length === 1) return;
+
+            razeniSestupneAkce = !razeniSestupneAkce; // Přepneme směr
+
+            rows.sort((a, b) => {
+                let datumA = a.getElementsByTagName("td")[0].innerText;
+                let datumB = b.getElementsByTagName("td")[0].innerText;
+                
+                if (datumA < datumB) return razeniSestupneAkce ? 1 : -1;
+                if (datumA > datumB) return razeniSestupneAkce ? -1 : 1;
+                return 0;
+            });
+
+            // Vložíme seřazené řádky zpět
+            rows.forEach(row => table.appendChild(row));
+        }
+    </script>S
       </div>
     </div>
   </body>

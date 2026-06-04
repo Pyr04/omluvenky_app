@@ -89,6 +89,51 @@ th { background-color: #111; font-family: 'Oswald', sans-serif; color: #888; tex
 tr:hover { background-color: #252525; }
 .cell-name { font-weight: bold; color: #fff; font-size: 1.1rem; }
 
+/* =========================================
+   MODERNÍ ROZBALOVACÍ SEZNAMY (SELECT)
+========================================= */
+select {
+    appearance: none; /* Vypne výchozí vzhled prohlížeče */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 10px 40px 10px 15px; /* Větší odsazení vpravo pro naši novou šipku */
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.95rem;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+    
+    /* Vlastní moderní šipka vložená přes SVG */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 15px;
+}
+
+/* Efekt po najetí myší */
+select:hover {
+    border-color: #555;
+}
+
+/* Efekt při rozkliknutí (aktivní stav) */
+select:focus {
+    outline: none;
+    border-color: #4caf50; /* Spartanská zelená */
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+}
+
+/* Obarvení samotných položek po rozkliknutí */
+select option {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+    padding: 10px;
+}
+
 @media (max-width: 768px) {
     /* 1. Hlavní rozložení: Boční panel už nebude vlevo, ale nahoře */
     body {

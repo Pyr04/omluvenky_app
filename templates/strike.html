@@ -42,30 +42,83 @@
             <h1 class="strike-title">STRIKES</h1>
             <p class="strike-subtitle">Zde jsou vypsány pouze operace s již uzavřenou a potvrzenou docházkou.</p>
 
-            <table>
-                <tr>
-                    <th>Datum</th>
-                    <th>Typ události</th>
-                    <th>Název</th>
-                    <th>Vyhodnocení</th>
-                </tr>
-                {% for akce in akce_seznam %}
-                <tr>
-                    <td class="text-date">{{ akce.datum }}</td>
-                    <td class="text-type">{{ akce.typ_akce.nazev }}</td>
-                    <td class="cell-name">{{ akce.nazev }}</td>
-                    <td>
-                        <a href="/strike/{{ akce.id }}">
-                            <button class="btn-strike"><i class="fa-solid fa-list"></i> Zobrazit vyhodnocení</button>
-                        </a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4" class="text-type" style="font-style: italic;">Žádné operace k vyhodnocení.</td>
-                </tr>
-                {% endfor %}
-            </table>
+            <div style="margin-bottom: 20px; position: relative;">
+            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 15px; top: 12px; color: #888;"></i>
+            <input type="text" id="search-strike" onkeyup="hledatStrike()" placeholder="Hledat podle názvu operace..." style="width: 100%; padding: 10px 10px 10px 40px; background-color: #1a1a1a; border: 1px solid #333; color: #fff; font-family: 'Roboto', sans-serif; box-sizing: border-box; border-radius: 4px;">
+        </div>
+
+        <table id="tabulka-strike">
+            <tr>
+                <th onclick="seraditDatumStrike('tabulka-strike')" style="cursor: pointer;" title="Klikni pro seřazení">
+                    Datum <i class="fa-solid fa-sort" style="margin-left: 5px; color: #888;"></i>
+                </th>
+                <th>Typ události</th>
+                <th>Název</th>
+                <th>Vyhodnocení</th>
+            </tr>
+            {% for akce in akce_seznam %}
+            <tr>
+                <td class="text-date">{{ akce.datum }}</td>
+                <td class="text-type">{{ akce.typ_akce.nazev }}</td>
+                <td class="cell-name">{{ akce.nazev }}</td>
+                <td>
+                    <a href="/strike/{{ akce.id }}">
+                        <button class="btn-strike"><i class="fa-solid fa-list"></i> Zobrazit vyhodnocení</button>
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" class="text-type" style="font-style: italic;">Žádné operace k vyhodnocení.</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+    </div>
+</div>
+
+<script>
+    function hledatStrike() {
+        var input = document.getElementById("search-strike");
+        var filter = input.value.toLowerCase();
+        var table = document.getElementById("tabulka-strike");
+        var tr = table.getElementsByTagName("tr");
+
+        for (var i = 1; i < tr.length; i++) {
+            // Hledáme ve sloupci s indexem 2 (Název)
+            var td = tr[i].getElementsByTagName("td")[2]; 
+            if (td) {
+                var txtValue = td.textContent || td.innerText;
+                if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    }
+
+    let razeniSestupneStrike = true;
+    function seraditDatumStrike(tableId) {
+        let table = document.getElementById(tableId);
+        let rows = Array.from(table.rows).slice(1);
+        
+        if (rows.length === 0 || rows[0].getElementsByTagName("td").length === 1) return;
+
+        razeniSestupneStrike = !razeniSestupneStrike;
+
+        rows.sort((a, b) => {
+            let datumA = a.getElementsByTagName("td")[0].innerText;
+            let datumB = b.getElementsByTagName("td")[0].innerText;
+            
+            if (datumA < datumB) return razeniSestupneStrike ? 1 : -1;
+            if (datumA > datumB) return razeniSestupneStrike ? -1 : 1;
+            return 0;
+        });
+
+        rows.forEach(row => table.appendChild(row));
+    }
+</script>
 
         </div>
     </div>

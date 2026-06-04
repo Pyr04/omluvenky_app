@@ -73,7 +73,7 @@
                                 <span style="color: #03a9f4; font-weight: bold;"> Omluven (Zapsáno v systému)</span>
                                 <input type="hidden" name="stav_{{ clen.id }}" value="Omluven_disabled">
                             {% else %}
-                                <select name="stav_{{ clen.id }}" style="padding: 5px; width: 200px;">
+                                <select name="stav_{{ clen.id }}" >
                                     <option value="Nezadáno" {% if aktualni_stav == 'Nezadáno' %}selected{% endif %}>-- Nezadáno --</option>
                                     <option value="Přítomen" {% if aktualni_stav == 'Přítomen' %}selected{% endif %}>PŘÍTOMEN</option>
                                     <option value="Pozdní příchod" {% if aktualni_stav == 'Pozdní příchod' %}selected{% endif %}>POZDNÍ PŘÍCHOD</option>
